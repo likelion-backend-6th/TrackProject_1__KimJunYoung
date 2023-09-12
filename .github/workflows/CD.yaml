@@ -1,0 +1,41 @@
+name: CD
+
+on:
+    workflow_run:
+      workflows: ["CI"]
+      types:
+        - completed
+    push:
+        branches:
+          - 'main'
+        paths:
+          - '.github/workflows/**'
+          - 'trackproject/**'
+ 
+env:
+    IMAGE_TAG: ${{ vars.NCR_REGISTRY }}/trackmission:latest
+
+
+jobs:
+    deploy:
+        name: deploy
+        runs-on: ubuntu-latest
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        steps:
+        - uses: actions/checkout@v3
+
+        - name: server access
+          uses: appleboy/ssh-action@v1.0.0
+          with:
+            host: ${{ secrets.BACKEND_IP }}
+            username: ${{ secrets.USERNAME }}
+            password: ${{ secrets.PASSWORD }}
+            script: |
+                docker login ${{ vars.NCR_REGISTRY }} \
+                -u ${{ secrets.NCR_ACCESS_KEY }} -p ${{ secrets.NCR_SECRET_KEY }}
+                docker pull ${{ env.IMAGE_TAG }}
+                docker stop trackmission && docker rm trackmission
+                docker run -p 8000:8000 -d \
+                --env-file /home/lion/.env \
+                --name trackmission \
+                devops6th-cr.kr.ncr.ntruss.com/trackmission:latest

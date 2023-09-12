@@ -1,0 +1,7 @@
+DJANGO_SETTINGS_MODULE=config.settings.local
+DB_HOST=
+
+POSTGRES_DB=trackmission
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_PORT=5432
